@@ -14,19 +14,29 @@ module OpenWeather
     # call OpenWeather API
     def call
       if is_query_a_coordinate?
-        lat, lon = @query.split('+', 2)
-        response = RestClient.get "http://api.openweathermap.org/data/2.5/weather?lat=#{lat}&lon=#{lon}&appid=#{@token}"
-        format_response response
+        lat, lon = @query.split(',', 2)
+        
+        begin
+          response = RestClient.get "http://api.openweathermap.org/data/2.5/weather?lat=#{lat}&lon=#{lon}&appid=#{@token}"
+          format_response response
+        rescue RestClient::ExceptionWithResponse
+          render json: {"message": "not found"}
+        end
+
       elsif !is_query_a_coordinate?
-        response = RestClient.get "http://api.openweathermap.org/data/2.5/weather?q=#{@query}&appid=#{@token}"
-        format_response response
+        begin
+          response = RestClient.get "http://api.openweathermap.org/data/2.5/weather?q=#{@query}&appid=#{@token}"
+          format_response response
+        rescue RestClient::ExceptionWithResponse
+          render json: {"message": "not found"}
+        end
       else
         render json: {"message": "not a valid URL parameter"}, status: :bad_request
       end
     end
 
     def is_query_a_coordinate?
-      there_are_numbers? && @query.include?('+')
+      there_are_numbers? && @query.include?(',')
     end
 
     def there_are_numbers?
